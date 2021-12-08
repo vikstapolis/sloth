@@ -9,6 +9,7 @@ data Literal = BoolL   Bool
              | FloatL  Float
              | ListL   (Vector Literal)
              | FuncL   [String] Block
+             | ExternL [String] ([Literal] -> Literal)
              | VarL    String
              | VoidL
              
