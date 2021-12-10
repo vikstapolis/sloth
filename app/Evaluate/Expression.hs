@@ -161,7 +161,9 @@ evalExp (CallE name argExps)  = do
             if length args /= length formalParams
             then error "Actual and formal parameters differ in length"
             else do
-                args <- liftIO $ HT.fromList (zip formalParams args)
+                args  <- liftIO $ HT.fromList (zip formalParams args)
+                -- To ensure that inside the function, we can find out that we are inside a function
+                liftIO $ HT.insert args "_" VoidL
                 retVal <- local (\store -> store {localVars=args})
                           (evalBlock body)
                 return $ fromMaybe VoidL retVal
@@ -210,6 +212,5 @@ evalExp (ExternE args f) = mapM evalExp args >>= liftIO . f
 
 
 invalidOperandError :: Char -> Expression -> Expression -> a
--- invalidOperandError op x y = error $ "Invalid operands for ("
---                           ++ op : ") operator: " ++ show x ++ "," ++ show y
-invalidOperandError = error "Invalid operands"
+invalidOperandError op x y = error $ "Invalid operands for ("
+                          ++ op : ") operator: " ++ show x ++ "," ++ show y

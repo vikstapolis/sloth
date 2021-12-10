@@ -88,6 +88,7 @@ instance Show Expression where
     show (CallE call es) = "CallE " ++ call ++ " " ++ show es
     show (DeclarationE decl e) = "DeclE " ++ decl ++ " " ++ show e
     show (AssignmentE name op e) = "AssignmentE " ++ name ++ " " ++ show op ++ " " ++ show e
+    show (ExternE es _) = "ExternE " ++ show es
 
 
 data Operator = PlusO

@@ -3,6 +3,7 @@ module Builtins where
 import Syntax
 import Control.Monad ((>=>))
 import qualified DataStructs.Vector as V
+import Control.Concurrent
 
 builtins = [ makeBuiltin "print"    ["x"]   print_
            , makeBuiltin "println"  ["x"]   println_
@@ -12,6 +13,7 @@ builtins = [ makeBuiltin "print"    ["x"]   print_
            , makeBuiltin "getWord"  ["msg"] getWord_
            , makeBuiltin "round"    ["num"] (return . round_)
            , makeBuiltin "len"      ["x"]   (return . len_)
+           , makeBuiltin "sleep"    ["t"]   sleep_
            , ("max", FuncL ["list"] [
                    ReturnS $ ExternE
                        [LitE $ VarL "list"]
@@ -50,6 +52,8 @@ getLine_ [StringL msg] = fmap StringL $ putStrLn msg >> getLine
 
 getWord_ [StringL msg] = fmap (StringL . head . words) $
                             putStrLn msg >> getLine
+
+sleep_ [IntL i] = VoidL <$ threadDelay (fromIntegral i)
 
 len_ [StringL s] = IntL . fromIntegral $ length s
 len_ [ListL l]   = IntL . fromIntegral $ V.length l

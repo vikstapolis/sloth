@@ -14,7 +14,7 @@ import qualified Text.Megaparsec.Char.Lexer as L
 import Data.Function ((&))
 
 import qualified Control.Monad.Combinators.Expr as E
-import Control.Monad (join)
+import Control.Monad (join, foldM)
 
 import qualified DataStructs.Vector as V
 import Control.Monad.IO.Class (liftIO)
@@ -43,7 +43,7 @@ parseStatement = choice
               <*> curlies (many parseStatement)
               <*> optional (
                     try (string "el" *> parseIf)
-                    <|> keyword "else" 
+                    <|> keyword "else"
                         *> curlies
                             (IfS (LitE $ BoolL True)
                                 <$> many parseStatement
@@ -123,33 +123,38 @@ parseExpression = try (lexeme parseDeclaration)
                       <*> (lexeme (char '=') *> parseExpression))
 
                       <|> do var <- identifier
-                             idx <- squares parseExpression
+                             idxs <- many $ squares parseExpression
                              op  <- optional parseOperator
                              lexeme (char '=')
                              val <- parseExpression
                              return $ AssignmentE
-                                        var 
+                                        var
                                         op
-                                        (ExternE [LitE $ VarL var, idx, val]
+                                        (ExternE ([LitE $ VarL var, val] ++ idxs)
                                             updateList)
 
         parseIndexing :: Parser Expression
         parseIndexing = try $ do
-                lst <- try parseCallExp <|> parens parseExpression <|> (LitE . VarL <$> identifier)
-                idx <- squares parseExpression
-                return $ OpE IndexO lst idx
+                lst  <- try parseCallExp <|> parens parseExpression <|> LitE . VarL <$> identifier
+                idxs <- many (squares parseExpression)
+                return $ foldl (OpE IndexO) lst idxs
 
 updateList :: [Literal] -> IO Literal
-updateList [ListL l, IntL i, val]
-    = V.write (fromIntegral i) val l >> return (ListL l)
+updateList (l:val:idxs)
+    = updateList' l val idxs >> return l
+    where
+        updateList' (ListL l) val [IntL i]      = V.write (fromIntegral i) val l >> return ()
+        updateList' (ListL l) val (IntL i:idxs) = do l' <- l V.! fromIntegral i
+                                                     updateList' l' val idxs
+    -- = V.write (fromIntegral i) val l >> return (ListL l)
 
 parseLiteral :: Parser Expression
 parseLiteral = choice
-                [ try $ 
+                [ try $
                   LitE . FloatL  <$> float
                 , LitE . IntL    <$> integer
-                , LitE . BoolL   <$> ((True <$ keyword "true")
-                                        <|> (False <$ keyword "false"))
+                , LitE . BoolL   <$> (True <$ keyword "true"
+                                        <|> False <$ keyword "false")
                 , LitE . StringL <$> stringLiteral
                 , LitE . VarL    <$> identifier
                 , LitE           <$> parseLambda
@@ -181,4 +186,6 @@ makeList :: [Literal] -> IO Literal
 makeList xs = ListL <$> V.fromList xs
 
 makeUniformList :: [Literal] -> IO Literal
+makeUniformList [IntL i, ListL v]
+    = fmap ListL $ V.fromList =<< mapM (const $ ListL <$> V.clone v) [1 .. i]
 makeUniformList [IntL i, e] = ListL <$> V.fromList (genericReplicate i e)

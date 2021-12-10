@@ -11,12 +11,11 @@ module DataStructs.Vector (
     init, tail, take, drop, slice, splitAt,
     (!),
     write, append, concat,
-    fromList,
-    toList,
+    fromList, toList, clone,
     printVec
 ) where
 
-import           Prelude hiding (length, null, init, tail, take, drop, splitAt, concat)
+import           Prelude hiding (length, null, init, tail, take, drop, splitAt, concat, replicate)
 import qualified Prelude as P
 
 import           Data.Vector.Mutable (IOVector)
@@ -98,11 +97,13 @@ ensureCapacity n v
     where
         len = V.length v
 
+clone :: Vector a -> IO (Vector a)
+clone (Vector i v) = Vector i <$> V.clone v
 
 fromList :: [a] -> IO (Vector a)
 fromList xs = do
     let len = P.length xs
-    vec <- V.new len
+    vec <- V.unsafeNew len
     forM_ (zip [0..] xs) (uncurry $ V.write vec)
     return $ Vector len vec
 
