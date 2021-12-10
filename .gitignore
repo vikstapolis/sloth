@@ -1,2 +1,5 @@
 # Ignore build products
-dist-newstyle/**
+dist-newstyle/
+
+# Ignore test sloth programs
+Programs/

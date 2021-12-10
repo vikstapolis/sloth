@@ -55,7 +55,9 @@ executable sloth
                    Evaluate.Statement,
                    Evaluate.Internal,
                    Evaluate.Block,
-                   Parser.Parse
+                   Parse.Lexer,
+                   Parse.Parser,
+                   Builtins
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
@@ -66,7 +68,9 @@ executable sloth
                       hashtables,
                       transformers,
                       mtl,
-                      megaparsec
+                      megaparsec,
+                      parser-combinators,
+                      text
 
     -- Directories containing source files.
     hs-source-dirs:   app

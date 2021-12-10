@@ -11,7 +11,9 @@ module DataStructs.Vector (
     init, tail, take, drop, slice, splitAt,
     (!),
     write, append, concat,
-    fromList
+    fromList,
+    toList,
+    printVec
 ) where
 
 import           Prelude hiding (length, null, init, tail, take, drop, splitAt, concat)
@@ -21,7 +23,7 @@ import           Data.Vector.Mutable (IOVector)
 import qualified Data.Vector.Mutable as V
 
 import Data.Coerce
-import Control.Monad (forM_)
+import Control.Monad (forM_, foldM)
 
 data Vector a = Vector !Int !(IOVector a)
 
@@ -103,6 +105,15 @@ fromList xs = do
     vec <- V.new len
     forM_ (zip [0..] xs) (uncurry $ V.write vec)
     return $ Vector len vec
+
+toList :: Vector a -> IO [a]
+toList vec = do
+    let len = length vec
+
+    foldM (\acc i -> do
+            e <- vec ! i
+            return $ e : acc
+        ) [] [len - 1, len - 2 .. 0]
 
 printVec :: Show a => Vector a -> IO ()
 printVec (Vector len v) = do
