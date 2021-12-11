@@ -1,4 +1,3 @@
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE LambdaCase #-}
 module Evaluate.Statement where
 
@@ -50,28 +49,3 @@ evalStmt (InputS inpType msgExp) = do
                     _        -> error $ "Cannot input type '" ++ inpType ++ "'"
 
 evalStmt (ExpressionS exp) = evalExp exp >> return Nothing
-
-program = [
-        ExpressionS $ DeclarationE "inputInt"
-            (LitE $
-                FuncL ["msg"]
-                      [InputS "Int" $ LitE (VarL "msg")]
-                ),
-        ExpressionS $ DeclarationE "add"
-            (LitE $
-                FuncL ["x","y"]
-                      [ReturnS $ OpE PlusO
-                          (LitE $ VarL "x")
-                          (LitE $ VarL "y")
-                          ]
-                ),
-        ExpressionS $ DeclarationE "a"
-            (CallE "inputInt" [LitE $ StringL "Enter a number"]),
-        ExpressionS $ DeclarationE "b"
-            (CallE "inputInt" [LitE $ StringL "Enter another number"]),
-        OutputS (CallE "add" [LitE $ VarL "a",LitE $ VarL "b"])
-    ]
-
-initStore :: IO Store
-initStore = join Store <$> HT.fromList
-                            [("print", FuncL ["toPrint"] [OutputS (LitE $ VarL "toPrint")])                    ]

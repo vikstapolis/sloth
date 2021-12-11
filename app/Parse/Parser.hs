@@ -4,20 +4,20 @@ module Parse.Parser where
 
 import Syntax
 import Parse.Lexer
+import qualified DataStructs.Vector as V
 
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Void
+
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-import Data.Function ((&))
+import Data.Void
 
 import qualified Control.Monad.Combinators.Expr as E
-import Control.Monad (join, foldM)
+import Control.Monad (join, foldM, void, replicateM)
 
-import qualified DataStructs.Vector as V
-import Control.Monad.IO.Class (liftIO)
+import Data.Function ((&))
 import Data.List (genericReplicate)
 
 parseStatement :: Parser Statement
@@ -78,8 +78,7 @@ parseExpression = try (lexeme parseDeclaration)
               <|> E.makeExprParser parseTerm operatorTable
     where
         parseTerm = choice $ map try
-                    [ parseIndexing
-                    , parseCallExp
+                    [ parseCallAndIndexing
                     , parseLiteral
                     , parens parseExpression
                     , parens parseDeclaration
@@ -106,10 +105,14 @@ parseExpression = try (lexeme parseDeclaration)
                -> E.Operator Parser Expression
         binary name f = E.InfixL (f <$ symbol name)
 
-        parseCallExp :: Parser Expression
-        parseCallExp = CallE
-                   <$> identifier
-                   <*> parens (sepBy parseExpression (lexeme ","))
+        parseCallAndIndexing :: Parser Expression
+        parseCallAndIndexing = try $ do
+            exp <- parens parseExpression
+               <|> LitE . VarL <$> identifier
+            callOrIdxs <- many $ 
+                                flip CallE <$> parseArgList 
+                            <|> flip (OpE IndexO) <$> squares parseExpression
+            return $ foldl (&) exp callOrIdxs
 
         parseDeclaration :: Parser Expression
         parseDeclaration = DeclarationE
@@ -133,20 +136,14 @@ parseExpression = try (lexeme parseDeclaration)
                                         (ExternE ([LitE $ VarL var, val] ++ idxs)
                                             updateList)
 
-        parseIndexing :: Parser Expression
-        parseIndexing = try $ do
-                lst  <- try parseCallExp <|> parens parseExpression <|> LitE . VarL <$> identifier
-                idxs <- many (squares parseExpression)
-                return $ foldl (OpE IndexO) lst idxs
 
 updateList :: [Literal] -> IO Literal
 updateList (l:val:idxs)
     = updateList' l val idxs >> return l
     where
-        updateList' (ListL l) val [IntL i]      = V.write (fromIntegral i) val l >> return ()
+        updateList' (ListL l) val [IntL i]      = void $ V.write (fromIntegral i) val l
         updateList' (ListL l) val (IntL i:idxs) = do l' <- l V.! fromIntegral i
                                                      updateList' l' val idxs
-    -- = V.write (fromIntegral i) val l >> return (ListL l)
 
 parseLiteral :: Parser Expression
 parseLiteral = choice
@@ -187,5 +184,8 @@ makeList xs = ListL <$> V.fromList xs
 
 makeUniformList :: [Literal] -> IO Literal
 makeUniformList [IntL i, ListL v]
-    = fmap ListL $ V.fromList =<< mapM (const $ ListL <$> V.clone v) [1 .. i]
+    = fmap ListL $ V.fromList =<< replicateM (fromIntegral i) (ListL <$> V.clone v)
 makeUniformList [IntL i, e] = ListL <$> V.fromList (genericReplicate i e)
+
+parseArgList :: Parser [Expression]
+parseArgList = parens $ sepBy parseExpression (lexeme $ char ',')

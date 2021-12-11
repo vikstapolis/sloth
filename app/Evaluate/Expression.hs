@@ -146,27 +146,46 @@ evalExp (OpE IndexO x y)  = do
 
         _        -> invalidOperandError 'i' x y
 
-evalExp (CallE name argExps)  = do
-    Store loc glob <- get
-    maybeFunc <- liftIO $
-                    (<|>)
-                    <$> HT.lookup loc name
-                    <*> HT.lookup glob name
-
-    case maybeFunc of
-        Nothing -> error $ "Couldn't find function '" ++ name ++ "'"
-
-        Just (FuncL formalParams body) -> do
-            args <- mapM evalExp argExps
-            if length args /= length formalParams
+evalExp (CallE exp args) = do
+    func <- evalExp exp
+    case func of 
+        FuncL params body -> do
+            Store loc glob <- get;
+            args <- mapM evalExp args
+            if length args /= length params
             then error "Actual and formal parameters differ in length"
             else do
-                args  <- liftIO $ HT.fromList (zip formalParams args)
-                -- To ensure that inside the function, we can find out that we are inside a function
+                args  <- liftIO $ HT.fromList (zip params args)
+
+                -- To ensure that inside the function,
+                -- we can find out that we are inside a function
                 liftIO $ HT.insert args "_" VoidL
+
                 retVal <- local (\store -> store {localVars=args})
                           (evalBlock body)
                 return $ fromMaybe VoidL retVal
+
+-- evalExp (CallE name argExps)  = do
+--     Store loc glob <- get
+--     maybeFunc <- liftIO $
+--                     (<|>)
+--                     <$> HT.lookup loc name
+--                     <*> HT.lookup glob name
+
+--     case maybeFunc of
+--         Nothing -> error $ "Couldn't find function '" ++ name ++ "'"
+
+--         Just (FuncL formalParams body) -> do
+--             args <- mapM evalExp argExps
+--             if length args /= length formalParams
+--             then error "Actual and formal parameters differ in length"
+--             else do
+--                 args  <- liftIO $ HT.fromList (zip formalParams args)
+--                 -- To ensure that inside the function, we can find out that we are inside a function
+--                 liftIO $ HT.insert args "_" VoidL
+--                 retVal <- local (\store -> store {localVars=args})
+--                           (evalBlock body)
+--                 return $ fromMaybe VoidL retVal
 
 evalExp (DeclarationE name exp) = do
     Store loc glob <- get

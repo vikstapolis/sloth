@@ -77,7 +77,7 @@ instance Ord Literal where
 
 data Expression = LitE         Literal
                 | OpE          Operator Expression Expression
-                | CallE        String [Expression]
+                | CallE        Expression [Expression]
                 | DeclarationE String Expression
                 | AssignmentE  String (Maybe Operator) Expression
                 | ExternE      [Expression] ([Literal] -> IO Literal)
@@ -85,7 +85,7 @@ data Expression = LitE         Literal
 instance Show Expression where
     show (LitE l) = show l
     show (OpE op e1 e2) = "OpE " ++ show op ++ " " ++ show e1 ++ " " ++ show e2
-    show (CallE call es) = "CallE " ++ call ++ " " ++ show es
+    show (CallE call es) = "CallE " ++ show call ++ " " ++ show es
     show (DeclarationE decl e) = "DeclE " ++ decl ++ " " ++ show e
     show (AssignmentE name op e) = "AssignmentE " ++ name ++ " " ++ show op ++ " " ++ show e
     show (ExternE es _) = "ExternE " ++ show es
