@@ -169,7 +169,7 @@ evalExp (DeclarationE name exp) = do
     case maybeVal of Nothing -> do
                                 val       <- evalExp exp
                                 globScope <- isGlobalScope
-
+                                
                                 if globScope
                                     then liftIO $ HT.insert glob name val
                                     else liftIO $ HT.insert loc  name val

@@ -51,6 +51,7 @@ instance Show Literal where
     show (FloatL f)  = "FloatL " ++ show f
     show (ListL l)   = "ListL " ++ show (V.length l)
     show (VarL s)    = "(VarL " ++ show s ++ ")"
+    show (FuncL a _) = "FuncL " ++ show a
 
 instance Eq Literal where
     (BoolL b)   == (BoolL c)   = b == c

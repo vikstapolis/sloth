@@ -1,16 +1,21 @@
 {-# LANGUAGE LambdaCase #-}
-module Evaluate.Internal where
 
-import Syntax
+module Evaluate.Internal where
+import Syntax ( Literal )
 
 import Data.HashTable.IO (BasicHashTable)
 import qualified Data.HashTable.IO as HT
 
-import Control.Monad.State (StateT, get, put, lift, runStateT, liftIO, modify)
+import Control.Monad.State
+    ( lift,
+      get, put,
+      StateT(runStateT),
+      MonadIO(liftIO) )
 
 import Control.Applicative ( (<|>) )
 
 type HashTable k v = BasicHashTable k v
+
 data Store = Store { localVars :: [HashTable String Literal]
                    , globalVars :: HashTable String Literal
                    }
@@ -23,9 +28,9 @@ local f g = do
 getVar :: String -> Store -> IO (Maybe Literal)
 getVar name (Store loc glob) = go name loc glob
     where go name []     glob = HT.lookup glob name
-          go name (x:xs) glob = (<|>)
-                            <$> HT.lookup x name
-                            <*> go name xs glob
+          go name (x:xs) glob = liftIO (HT.lookup x name) >>=
+                                \case Just val -> return (Just val)
+                                      Nothing  -> go name xs glob
 
 isGlobalScope :: Monad m => StateT Store m Bool
 isGlobalScope = do Store loc _ <- get
@@ -35,12 +40,12 @@ addScope :: Monad m => HashTable String Literal -> StateT Store m ()
 addScope ht = do Store loc glob <- get
                  put $ Store (ht:loc) glob
 
-newScope :: StateT Store IO ()
+newScope :: MonadIO m => StateT Store m ()
 newScope = do Store loc glob <- get
               loc' <- liftIO $ (:loc) <$> HT.new
               put $ Store loc' glob
 
-popScope :: StateT Store IO ()
+popScope :: Monad m => StateT Store m ()
 popScope = do Store loc glob <- get
               case loc of (_:loc') -> put $ Store loc' glob
                           []       -> error "popScope: Already in global scope"
@@ -51,7 +56,7 @@ withScope :: Monad m
           -> StateT Store m a
 withScope ht = local (\(Store loc glob) -> Store (ht:loc) glob)
 
-makeVar :: String -> Literal -> StateT Store IO ()
+makeVar :: MonadIO m => String -> Literal -> StateT Store m ()
 makeVar name val = do Store loc glob <- get
                       case loc of 
                           x:xs -> liftIO (HT.lookup x name) >>=

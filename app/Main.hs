@@ -1,37 +1,26 @@
 module Main where
 
-import Evaluate.Statement
+import Evaluate.Statement ( evalStmt )
 import Text.Megaparsec
-import Parse.Parser
+    ( runParser, errorBundlePretty, many, MonadParsec(eof) )
+import Parse.Parser ( parseStatement )
+
+import Evaluate.Internal ( Store(Store) )
+import qualified Data.HashTable.IO as HT
+import Builtins ( builtins )
+
+import qualified Data.Text.IO as T
+
 import Control.Monad.State (runStateT)
-import Data.Text
 import Control.Monad (void)
 import System.Environment (getArgs)
-import qualified Data.HashTable.IO as HT
-import Syntax
-import Evaluate.Internal
-import Builtins
 
 
 main :: IO ()
 main = do
     initStore <- Store [] <$> HT.fromList builtins
     [filename] <- getArgs
-    prog <- readFile filename
-    case runParser (many parseStatement <* eof) filename (pack prog) of
+    prog <- T.readFile filename
+    case runParser (many parseStatement <* eof) filename prog of
         Right ast -> void (runStateT (mapM_ evalStmt ast) initStore)
         Left err  -> putStrLn $ errorBundlePretty err
-
-getFloat :: [Literal] -> IO Literal
-getFloat [StringL msg] = fmap FloatL $ putStrLn msg >> readLn
-
-{-
-Store <$> HT.fromList []
-                    <*> HT.fromList
-                    [ ("print", FuncL ["toPrint"] [OutputS (LitE $ VarL "toPrint")])
-                    , ("getInt", FuncL ["msg"] [InputS "Int" $ LitE (VarL "msg")])
-                    , ("getFloat", FuncL ["msg"] [ReturnS $ ExternE [LitE (VarL "msg")] getFloat])
-                    , ("getLine", FuncL ["msg"] [InputS "String" $ LitE (VarL "msg")])
-                    , ("getBool", FuncL ["msg"] [InputS "Bool" $ LitE (VarL "msg")])
-                    ]
--}
