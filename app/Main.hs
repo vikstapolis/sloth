@@ -1,6 +1,5 @@
 module Main where
 
-import Evaluate.Block
 import Evaluate.Statement
 import Text.Megaparsec
 import Parse.Parser
@@ -16,13 +15,12 @@ import Builtins
 
 main :: IO ()
 main = do
-    initStore <- Store <$> HT.fromList []
-                       <*> HT.fromList builtins
+    initStore <- Store [] <$> HT.fromList builtins
     [filename] <- getArgs
     prog <- readFile filename
     case runParser (many parseStatement <* eof) filename (pack prog) of
-        Right ast -> void (runStateT (evalBlock ast) initStore)
-        Left err -> putStrLn $ errorBundlePretty err
+        Right ast -> void (runStateT (mapM_ evalStmt ast) initStore)
+        Left err  -> putStrLn $ errorBundlePretty err
 
 getFloat :: [Literal] -> IO Literal
 getFloat [StringL msg] = fmap FloatL $ putStrLn msg >> readLn

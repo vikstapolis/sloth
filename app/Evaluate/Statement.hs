@@ -20,7 +20,7 @@ evalStmt :: Statement
 evalStmt (IfS cond block maybeElse)  = do
     cond' <- evalExp cond
     case cond' of BoolL b -> if b
-                                 then evalBlock block
+                                 then newScope >> evalBlock block
                                  else maybe (return Nothing)
                                             evalStmt
                                             maybeElse
@@ -28,13 +28,15 @@ evalStmt (IfS cond block maybeElse)  = do
 evalStmt (WhileS cond block)  = do
     cond' <- evalExp cond
     case cond' of BoolL b -> if b
-                                 then evalBlock block >>= \case
+                                 then newScope >> evalBlock block >>= \case
                                         Nothing -> evalStmt (WhileS cond block)
                                         Just l  -> return (Just l)
                                  else return Nothing
 
 
-evalStmt (ReturnS expr) = Just <$> evalExp expr
+evalStmt (ReturnS expr) = isGlobalScope >>=
+                          \case False -> Just <$> evalExp expr
+                                True  -> error "Return statement outside a function"
 
 evalStmt (OutputS exp) = evalExp exp >>= liftIO . printLit >> return Nothing
 

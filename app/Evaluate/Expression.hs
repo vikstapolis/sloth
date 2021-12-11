@@ -24,11 +24,9 @@ evalExp :: Expression
         -> StateT Store IO Literal
 
 evalExp (LitE (VarL name))  = do
-    Store loc glob <- get
-    maybeVal <- liftIO $
-            (<|>)
-            <$> HT.lookup loc  name
-            <*> HT.lookup glob name
+    store <- get
+    maybeVal <- liftIO $ getVar name store
+
     case maybeVal of Just lit -> return lit
                      Nothing  -> error $ "Cannot find variable '" ++ name ++ "'"
 
@@ -159,24 +157,20 @@ evalExp (CallE exp args) = do
 
                 -- To ensure that inside the function,
                 -- we can find out that we are inside a function
-                liftIO $ HT.insert args "_" VoidL
+                -- liftIO $ HT.insert args "_" VoidL
 
-                retVal <- local (\store -> store {localVars=args})
-                          (evalBlock body)
+                retVal <- withScope args (evalBlock body)
                 return $ fromMaybe VoidL retVal
 
 evalExp (DeclarationE name exp) = do
-    Store loc glob <- get
-    maybeVal <- liftIO $
-            (<|>)
-            <$> HT.lookup loc  name
-            <*> HT.lookup glob name
+    store@(Store ~(loc:_) glob) <- get
+    maybeVal <- liftIO $ getVar name store
 
     case maybeVal of Nothing -> do
-                                val <- evalExp exp
-                                isGlobalScope <- liftIO $ null <$> HT.toList loc
+                                val       <- evalExp exp
+                                globScope <- isGlobalScope
 
-                                if isGlobalScope
+                                if globScope
                                     then liftIO $ HT.insert glob name val
                                     else liftIO $ HT.insert loc  name val
 
@@ -185,22 +179,15 @@ evalExp (DeclarationE name exp) = do
                      Just _  -> error $ "Variable '" ++ name ++ "' already defined"
 
 evalExp (AssignmentE name maybeOp exp) = do
-    Store loc glob <- get
-    maybeVal <- liftIO $
-            (<|>)
-            <$> (fmap (False,) <$> HT.lookup loc  name)
-            <*> (fmap (True,)  <$> HT.lookup glob name)
+    store@(Store (loc:_) glob) <- get
+    maybeVal <- liftIO $ getVar name store
 
     case maybeVal of
-        Just (isGlobal,oldVal) -> do
+        Just oldVal -> do
                 val <- case maybeOp of
                            Just op -> evalExp $ OpE op (LitE oldVal) exp
                            Nothing -> evalExp exp
-
-                if isGlobal
-                    then liftIO $ HT.insert glob name val
-                    else liftIO $ HT.insert loc  name val
-
+                makeVar name val
                 return val
 
         Nothing -> error $ "Cannot find variable '" ++ name ++ "'"
