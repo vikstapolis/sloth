@@ -1,5 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables, TypeApplications #-}
-
 -- Wraps the Data.Vector.Mutable interface,
 -- providing automatic resizing 
 --
