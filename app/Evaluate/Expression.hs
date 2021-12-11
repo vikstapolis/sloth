@@ -179,7 +179,7 @@ evalExp (DeclarationE name exp) = do
                      Just _  -> error $ "Variable '" ++ name ++ "' already defined"
 
 evalExp (AssignmentE name maybeOp exp) = do
-    store@(Store (loc:_) glob) <- get
+    store@(Store ~(loc:_) glob) <- get
     maybeVal <- liftIO $ getVar name store
 
     case maybeVal of
