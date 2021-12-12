@@ -22,7 +22,7 @@ evalStmt (IfS cond block maybeElse)  = do
     case cond' of BoolL b -> if b
                                  then newScope >> evalBlock block
                                  else maybe (return Nothing)
-                                            (\x -> newScope >> evalStmt x)
+                                            evalStmt
                                             maybeElse
 
 evalStmt (WhileS cond block)  = do
