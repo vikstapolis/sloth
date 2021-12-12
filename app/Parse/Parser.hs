@@ -59,15 +59,12 @@ parseStatement = choice
         parseReturn = ReturnS
                   <$> (keyword "return" *> parseExpression)
 
-parseOperator :: Parser Operator
-parseOperator = try . lexeme $ choice
+parseArithOperator :: Parser Operator
+parseArithOperator = try . lexeme $ choice
                     [ PlusO     <$ "+"
                     , MinusO    <$ "-"
                     , MultiplyO <$ "*"
                     , DivideO   <$ "/"
-                    , EqualO    <$ "=="
-                    , GreaterO  <$ ">"
-                    , LesserO   <$ "<"
                     , ModuloO   <$ "%"
                     ]
 
@@ -94,10 +91,25 @@ parseExpression = try (lexeme parseDeclaration)
             , [ binary "+" (OpE PlusO)
               , binary "-" (OpE MinusO)
               ]
-            , [ binary "<" (OpE LesserO)
+            , [ E.InfixL $ (\x y ->
+                  OpE OrO
+                    (OpE LesserO x y)
+                    (OpE EqualO x y)
+                ) <$ try (lexeme "<=")
+              , E.InfixL $ (\x y ->
+                  OpE OrO
+                    (OpE GreaterO x y)
+                    (OpE EqualO x y)
+                ) <$ try (lexeme ">=")
+              , binary "<" (OpE LesserO)
               , binary ">" (OpE GreaterO)
               ]
             , [ binary "==" (OpE EqualO)
+              , binary "!=" (OpE NotEqualO)
+              ]
+            , [ binary "&&" (OpE AndO)
+              ]
+            , [ binary "||" (OpE OrO)
               ]
             ]
 
@@ -122,12 +134,12 @@ parseExpression = try (lexeme parseDeclaration)
         parseAssignment :: Parser Expression
         parseAssignment = try (AssignmentE
                       <$> identifier
-                      <*> optional parseOperator
+                      <*> optional parseArithOperator
                       <*> (lexeme (char '=') *> parseExpression))
 
                       <|> do var <- identifier
                              idxs <- many $ squares parseExpression
-                             op  <- optional parseOperator
+                             op  <- optional parseArithOperator
                              lexeme (char '=')
                              val <- parseExpression
                              return $ AssignmentE

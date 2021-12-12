@@ -18,20 +18,20 @@ import Control.Applicative ((<|>))
 evalStmt :: Statement
          -> StateT Store IO (Maybe Literal)
 evalStmt (IfS cond block maybeElse)  = do
-    cond' <- evalExp cond
-    case cond' of BoolL b -> if b
-                                 then newScope >> evalBlock block
-                                 else maybe (return Nothing)
-                                            evalStmt
-                                            maybeElse
+    cond' <- evalExp cond >>= liftIO . toBool
+    if cond'
+        then newScope >> evalBlock block
+        else maybe (return Nothing)
+                   evalStmt
+                   maybeElse
 
 evalStmt (WhileS cond block)  = do
-    cond' <- evalExp cond
-    case cond' of BoolL b -> if b
-                                 then newScope >> evalBlock block >>= \case
-                                        Nothing -> evalStmt (WhileS cond block)
-                                        Just l  -> return (Just l)
-                                 else return Nothing
+    cond' <- evalExp cond >>= liftIO . toBool
+    if cond'
+        then newScope >> evalBlock block >>= \case
+               Nothing -> evalStmt (WhileS cond block)
+               Just l  -> return (Just l)
+        else return Nothing
 
 
 evalStmt (ReturnS expr) = isGlobalScope >>=

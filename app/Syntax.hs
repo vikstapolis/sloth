@@ -13,6 +13,29 @@ data Literal = BoolL   Bool
              | VarL    String
              | VoidL
 
+toBool :: Literal -> IO Bool
+toBool (BoolL b)   = return b
+toBool (StringL s) = return $ not $ null s
+toBool (IntL i)    = return $ i /= 0
+toBool (FloatL f)  = return $ f /= 0
+toBool (ListL l)   = return $ not $ V.null l
+
+eq :: Literal -> Literal -> IO Bool
+BoolL b1   `eq` BoolL b2   = return $ b1 == b2
+StringL s1 `eq` StringL s2 = return $ s1 == s2
+IntL i1    `eq` IntL i2    = return $ i1 == i2
+FloatL f1  `eq` FloatL f2  = return $ f1 == f2
+ListL l1   `eq` ListL l2   = V.eq l1 l2
+_ `eq` _ = error "Cannot compare types"
+
+cmp :: Literal -> Literal -> IO Ordering
+BoolL b1   `cmp` BoolL b2   = return $ b1 `compare` b2
+StringL s1 `cmp` StringL s2 = return $ s1 `compare` s2
+IntL i1    `cmp` IntL i2    = return $ i1 `compare` i2
+FloatL f1  `cmp` FloatL f2  = return $ f1 `compare` f2
+ListL l1   `cmp` ListL l2   = V.cmp l1 l2
+_ `cmp` _ = error "Cannot compare types"
+
 showLit :: Literal -> IO String
 showLit (BoolL b) = return $ show b
 showLit (StringL s) = return s
@@ -82,7 +105,7 @@ data Expression = LitE         Literal
                 | DeclarationE String Expression
                 | AssignmentE  String (Maybe Operator) Expression
                 | ExternE      [Expression] ([Literal] -> IO Literal)
-            
+
 instance Show Expression where
     show (LitE l) = show l
     show (OpE op e1 e2) = "OpE " ++ show op ++ " " ++ show e1 ++ " " ++ show e2
@@ -98,8 +121,11 @@ data Operator = PlusO
               | DivideO
               | ModuloO
               | EqualO
+              | NotEqualO
               | GreaterO
               | LesserO
+              | OrO
+              | AndO
               | IndexO -- To index a List
               | CustomO String
               deriving (Show)

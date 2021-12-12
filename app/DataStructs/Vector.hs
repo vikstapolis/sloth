@@ -8,6 +8,7 @@ module DataStructs.Vector (
     length, null,
     init, tail, take, drop, slice, splitAt,
     (!),
+    eq, cmp,
     write, append, concat,
     fromList, toList, clone,
     printVec
@@ -120,6 +121,35 @@ printVec (Vector len v) = do
     V.read v 0 >>= putStr . show
     V.mapM_ (putStr . (',':) . show) (V.take (len-1) $ V.tail v)
     putStrLn "]"
+
+eq :: Eq a => Vector a -> Vector a -> IO Bool
+eq (Vector _ v1) (Vector _ v2) = eq' v1 v2
+    where
+        eq' :: Eq a => IOVector a -> IOVector a -> IO Bool
+        eq' v1 v2 
+            | V.null v1 && V.null v2 = return True
+            | V.null v1 || V.null v2 = return False
+            | otherwise =  do h1 <- V.read v1 0
+                              h2 <- V.read v2 0
+                              if h1 == h2
+                                  then eq' (V.tail v1) (V.tail v2)
+                                  else return False
+
+cmp :: Ord a => Vector a -> Vector a -> IO Ordering
+cmp (Vector _ v1) (Vector _ v2) = cmp' v1 v2
+    where
+        cmp' :: Ord a => IOVector a -> IOVector a -> IO Ordering
+        cmp' v1 v2
+            | V.null v1 && V.null v2 = return EQ
+            | V.null v1              = return LT
+            | V.null v2              = return GT
+            | otherwise              = do
+                h1 <- V.read v1 0
+                h2 <- V.read v2 0
+                case h1 `compare` h2 of 
+                    EQ -> cmp' (V.tail v1) (V.tail v2)
+                    x  -> return x
+
 
 func = do
     vec <- fromList [1,2,3]

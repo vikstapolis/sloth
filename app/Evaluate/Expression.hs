@@ -119,17 +119,42 @@ evalExp (OpE ModuloO x y) = do
 evalExp (OpE EqualO x y)  = do
     xL <- evalExp x
     yL <- evalExp y
-    return $ BoolL (xL == yL)
+    BoolL <$> liftIO (xL `eq` yL)
+
+evalExp (OpE NotEqualO x y) = do
+    xL <- evalExp x
+    yL <- evalExp y
+    BoolL . not <$> liftIO (xL `eq` yL)
 
 evalExp (OpE LesserO x y)  = do
     xL <- evalExp x
     yL <- evalExp y
-    return $ BoolL (xL < yL)
+    BoolL . (==LT) <$> liftIO (xL `cmp` yL)
 
 evalExp (OpE GreaterO x y)  = do
     xL <- evalExp x
     yL <- evalExp y
-    return $ BoolL (xL > yL)
+    BoolL . (==GT) <$> liftIO (xL `cmp` yL)
+
+evalExp (OpE AndO x y) = do
+    xL <- evalExp x
+    yL <- evalExp y
+
+    xB <- liftIO $ toBool xL
+
+    if xB
+        then return yL
+        else return xL
+
+evalExp (OpE OrO x y) = do
+    xL <- evalExp x
+    yL <- evalExp y
+
+    xB <- liftIO $ toBool xL
+
+    if xB
+        then return xL
+        else return yL
 
 evalExp (OpE IndexO x y)  = do
     xL <- evalExp x
@@ -154,10 +179,6 @@ evalExp (CallE exp args) = do
             then error "Actual and formal parameters differ in length"
             else do
                 args  <- liftIO $ HT.fromList (zip params args)
-
-                -- To ensure that inside the function,
-                -- we can find out that we are inside a function
-                -- liftIO $ HT.insert args "_" VoidL
 
                 retVal <- withScope args (evalBlock body)
                 return $ fromMaybe VoidL retVal
@@ -193,7 +214,6 @@ evalExp (AssignmentE name maybeOp exp) = do
         Nothing -> error $ "Cannot find variable '" ++ name ++ "'"
 
 evalExp (ExternE args f) = mapM evalExp args >>= liftIO . f
-
 
 invalidOperandError :: Char -> Expression -> Expression -> a
 invalidOperandError op x y = error $ "Invalid operands for ("
