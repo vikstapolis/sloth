@@ -1,5 +1,13 @@
 # Sloth
 
+## PURPOSE (2026 Edit)
+
+This was an experiment in developing my own interpreted language using monadic parser combinators in Haskell. It imitates mainstream imperative languages with C-style syntax.
+
+The project was intended as a learning experience and, while successful in achieving this goal, it should not be used for any real-world programming. The name "sloth" alludes to the absence of any focus on performance, and the resulting sloth-like speed of the interpreter.
+
+## (2021 README from here onwards)
+
 ## About
 
 Sloth is a dynamically typed, multi-paradigm interpreted language. It is currently in the development phase.
