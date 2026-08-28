@@ -1,6 +1,6 @@
 # Sloth
 
-A small interpreted programming language written in Haskell.
+An interpreted programming language written from scratch in Haskell.
 
 I wrote Sloth in 2021 as an experiment in developing my own interpreted language using monadic parser combinators in Haskell. It imitates mainstream imperative languages with C-style syntax.
 
