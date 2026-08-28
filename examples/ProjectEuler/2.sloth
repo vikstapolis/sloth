@@ -1,0 +1,21 @@
+func solve() {
+    // By considering the terms in the Fibonacci sequence whose values
+    // do not exceed four million, find the sum of the even-valued terms.
+
+    var a = var c = var sum = 0;
+    var b = 1;
+
+    while c < 4000000 {
+        c = a + b;
+        a = b;
+        b = c;
+
+        if c % 2 == 0 {
+            sum += c;
+        }
+    }
+
+    return sum;
+}
+
+println(solve());

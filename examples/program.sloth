@@ -1,0 +1,24 @@
+func evaluate(a, b, op) {
+    if (op == "+") {
+        var res = a + " + " + b + " = " + (a + b);
+    }
+    elif (op == "-") {
+        var res = a + " - " + b + " = " + (a + b);
+    }
+    elif (op == "*") {
+        var res = a + " * " + b + " = " + (a + b);
+    }
+    elif (op == "/") {
+        var res = a + " / " + b + " = " + (a + b);
+    }
+    else {
+        var res = "Invalid operator: (" + op + ")";
+    }
+    return res;
+}
+
+var a  = getInt("Enter a number");
+var b  = getInt("Enter a number");
+var op = getLine("Enter an operator");
+
+print(evaluate(a, b, op));

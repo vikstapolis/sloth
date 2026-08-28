@@ -1,0 +1,37 @@
+var even = | x => x % 2 == 0 |;
+
+var num = getInt("Enter a number");
+
+if even(num) {
+    print(num + " is even");
+} else {
+    print(num + " is not even");
+}
+
+var sumIs = | (x, y, f) => f(x + y) |;
+var num2 = getInt("Enter a number");
+
+if sumIs(num, num2, even) {
+    print(num + " + " + num2 + " is even");
+} else {
+    print(num + " + " + num2 + " is not even");
+}
+
+var prime = | x => {
+        if x < 2 { return false; }
+
+        var i = 2;
+
+        while i < x {
+            if x % i == 0 { return false; }
+            i += 1;
+        }
+        
+        return true;
+    }|;
+
+if prime(num2) {
+    print(num2 + " is prime");
+} else {
+    print(num2 + " is not prime");
+}

@@ -1,0 +1,39 @@
+func toWords(sentence) {
+    var words = [];
+    var current = "";
+    var l   = len(sentence);
+    var i     = 0;
+
+    while i < l {
+        if sentence[i] != " " {
+            current = current + sentence[i];
+            i += 1;
+        } else {
+            words += [current];
+            current = "";
+            
+            while i < l && sentence[i] == " " {
+                i += 1;
+            }
+        }
+    }
+    
+    if current != "" {
+        words += [current];
+    }
+
+    return words;
+}
+
+func main() {
+    while true {
+        var s = getLine("Enter a sentence");
+        if s != "" {
+            println(toWords(s));
+        } else {
+            return 0;
+        }
+    }
+}
+
+main();

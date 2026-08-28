@@ -1,0 +1,55 @@
+func hangman() {
+    var word = getWord("Enter your word: ");
+    var numberOfChars = len(word);
+    var strikes = var correctChars = var i = 0;
+    var guesses = ["_" : numberOfChars];
+
+    println("Player: Guess the letters. You have 5 strikes.");
+
+    while i < numberOfChars {
+        print(guesses[i] + " ");
+        i += 1;
+    }
+    println("");
+
+    var wrongs = [0: 5];
+    var guess = var guessIsWrong = 0;
+    while correctChars < numberOfChars {
+        guess = getWord("Guess:")[0];
+
+        guessIsWrong = true;
+
+        i = 0;
+        while i < numberOfChars {
+            if word[i] == guess {
+                guesses[i] = guess;
+                guessIsWrong = false;
+                correctChars += 1;
+            }
+            i += 1;
+        }
+
+        if guessIsWrong {
+            wrongs[strikes] = guess;
+            strikes += 1;
+            println("You have earned a strike! " + (5 - strikes) + " left.");
+        }
+
+        i = 0;
+        while i < numberOfChars {
+        print(guesses[i] + " ");
+        i += 1;
+    }
+    println("");
+
+        if strikes == 5 {
+            println("You lost! The answer was '" + word + "'.");
+            return 0;
+        }
+    }
+
+    println("You won!");
+    return 0;
+}
+
+hangman();

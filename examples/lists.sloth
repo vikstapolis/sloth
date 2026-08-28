@@ -1,0 +1,10 @@
+var n    = getInt("Enter a number");
+var fibs = [0, 1] + [0: n - 2];
+
+var i = 2;
+while i < n {
+    fibs[i] = fibs[i-1] + fibs[i-2];
+    i += 1;
+}
+
+print(fibs);

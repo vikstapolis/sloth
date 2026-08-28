@@ -1,0 +1,113 @@
+var board = [["=": 30]] + [[" " : 30] : 29];
+
+var live = [
+    [6,9],
+    [6,10],
+    [6,11],
+    [7,9],
+    [7,11],
+    [8,9],
+    [8,10],
+    [8,11],
+    [9,9],
+    [9,10],
+    [9,11],
+    [10,9],
+    [10,10],
+    [10,11],
+    [11,9],
+    [11,10],
+    [11,11],
+    [12,9],
+    [12,11],
+    [13,9],
+    [13,10],
+    [13,11]
+];
+
+func main () {
+    init();
+
+    while true {
+        printBoard();
+        updateBoard();
+        sleep(700000);
+    }
+}
+
+func init() {
+    var l = len(live);
+    var i = 0;
+
+    while i < l {
+        board[live[i][0]][live[i][1]] = "+";
+        i += 1;
+    }
+    
+}
+
+func updateBoard() {
+    var newBoard = [["=": 30]] + [[" " : 30] : 29];
+
+    var i = var j = 1;
+
+    while i < 19 {
+        j = 1;
+        while j < 19 {
+            updateCell(i, j, newBoard);
+            j += 1;
+        }
+        i += 1;
+    }
+    board = newBoard;
+}
+
+func updateCell(i, j, b) {
+    var k = var l = i - 1;
+    var count = 0;
+
+    if board[i][j] == "+" {
+        count = -1;
+    } else {
+        count = 0;
+    }
+
+    while k < i + 2 {
+        l = j - 1;
+        while l < j + 2 {
+            if board[k][l] == "+" {
+                count += 1;
+            }
+            l += 1;
+        }
+        k += 1;
+    }
+
+    if board[i][j] == "+" {
+        if count < 2 {
+            b[i][j] = " ";
+        } elif count > 3 {
+            b[i][j] = " ";
+        } else {
+            b[i][j] = "+";
+        }
+    } elif count == 3 {
+        b[i][j] = "+";
+    }
+}
+
+func printBoard() {
+    var i = var j = 0;
+
+    while i < 19 {
+        j = 0;
+        while j < 19 {
+            print(board[i][j] + " ");
+            j += 1;
+        }
+        println("");
+        i += 1;
+    }
+}
+
+main();

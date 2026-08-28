@@ -1,0 +1,10 @@
+var biggest = max(["how", "you", "doin?"]);
+var smallest = min(["how", "you", "doin?"]);
+var rounded = round(7.2);
+var stuff   = [getWord("Word: "), getLine("Line: "), getInt("Int: "),
+                    getFloat("Float: ")];
+
+println(biggest);
+println(smallest);
+println(rounded);
+println(stuff);

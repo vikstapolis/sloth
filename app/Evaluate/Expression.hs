@@ -138,23 +138,19 @@ evalExp (OpE GreaterO x y)  = do
 
 evalExp (OpE AndO x y) = do
     xL <- evalExp x
-    yL <- evalExp y
-
     xB <- liftIO $ toBool xL
 
     if xB
-        then return yL
+        then evalExp y
         else return xL
 
 evalExp (OpE OrO x y) = do
     xL <- evalExp x
-    yL <- evalExp y
-
     xB <- liftIO $ toBool xL
 
     if xB
         then return xL
-        else return yL
+        else evalExp y
 
 evalExp (OpE IndexO x y)  = do
     xL <- evalExp x

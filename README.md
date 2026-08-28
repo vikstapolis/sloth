@@ -30,8 +30,9 @@ The `examples/` directory contains example Sloth programs, including:
 - `words.sloth` — string processing
 - `ProjectEuler/` — solutions to Project Euler problems
 
-**test.sloth**
 ```text
+// test.sloth
+
 func map(f, xs) {
     var result = [];
     var i = 0;
